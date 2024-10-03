@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu País - Simulador</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .country-list {
+            margin-top: 20px;
+        }
+        .country-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .country-name {
+            font-weight: bold;
+        }
+        .stats {
+            color: #555;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bem-vindo ao Meu País</h1>
+    </header>
+    <div class="container">
+        <h2>Criar um Novo País</h2>
+        <form id="countryForm">
+            <label for="countryName">Nome do País:</label><br>
+            <input type="text" id="countryName" required><br><br>
+            <label for="governmentType">Tipo de Governo:</label><br>
+            <select id="governmentType">
+                <option value="monarquia">Monarquia Parlamentarista</option>
+                <option value="republica">República</option>
+            </select><br><br>
+            <button type="submit" class="button">Criar País</button>
+        </form>
+        
+        <div class="country-list" id="countryList">
+            <h2>Países Criados</h2>
+            <div id="countriesContainer"></div>
+        </div>
+
+        <div class="actions" id="actionContainer" style="display:none;">
+            <h2>Gerenciar País</h2>
+            <button id="randomEventBtn" class="button">Gerar Evento Aleatório</button>
+        </div>
+    </div>
+    
+    <script>
+        let countries = JSON.parse(localStorage.getItem('countries')) || [];
+
+        function renderCountries() {
+            const container = document.getElementById('countriesContainer');
+            container.innerHTML = '';
+            countries.forEach((country, index) => {
+                const countryItem = document.createElement('div');
+                countryItem.className = 'country-item';
+                countryItem.innerHTML = `
+                    <div class="country-name">${country.name}</div>
+                    <div class="stats">Governo: ${country.government} | PIB: ${country.gdp || 0} | População: ${country.population || 0} | Felicidade: ${country.happiness || 0}</div>
+                    <button onclick="manageCountry(${index})" class="button">Gerenciar</button>
+                `;
+                container.appendChild(countryItem);
+            });
+        }
+
+        document.getElementById("countryForm").onsubmit = function(e) {
+            e.preventDefault();
+            const countryName = document.getElementById("countryName").value;
+            const governmentType = document.getElementById("governmentType").value;
+
+            countries.push({ 
+                name: countryName, 
+                government: governmentType, 
+                gdp: Math.floor(Math.random() * 10000) + 1000, // PIB inicial aleatório
+                population: Math.floor(Math.random() * 100000) + 1000, // População inicial aleatória
+                happiness: Math.floor(Math.random() * 100) + 1 // Felicidade inicial aleatória
+            });
+            localStorage.setItem('countries', JSON.stringify(countries));
+            renderCountries();
+            document.getElementById("countryForm").reset();
+            alert("País criado com sucesso!");
+        };
+
+        function manageCountry(index) {
+            const country = countries[index];
+            alert(`Gerenciando o país: ${country.name}\n\nGoverno: ${country.government}\nPIB: ${country.gdp}\nPopulação: ${country.population}\nFelicidade: ${country.happiness}`);
+            // Aqui você pode adicionar opções de gerenciamento, como aumentar PIB, população, etc.
+            // Por enquanto, vamos mostrar um evento aleatório.
+            document.getElementById('actionContainer').style.display = 'block';
+            document.getElementById('randomEventBtn').onclick = function() {
+                const eventOutcome = generateRandomEvent(country);
+                alert(`Evento Aleatório: ${eventOutcome}`);
+            };
+        }
+
+        function generateRandomEvent(country) {
+            const events = [
+                { description: "Uma crise econômica ocorreu!", effect: () => country.gdp *= 0.9 },
+                { description: "Um novo líder carismático chegou ao poder!", effect: () => country.happiness += 10 },
+                { description: "Um desastre natural afetou o país!", effect: () => country.population *= 0.9 },
+                { description: "Um aumento na população trouxe novas oportunidades!", effect: () => { country.gdp *= 1.1; country.population *= 1.1; } },
+            ];
+
+            const randomEvent = events[Math.floor(Math.random() * events.length)];
+            randomEvent.effect(); // Aplica o efeito do evento
+            localStorage.setItem('countries', JSON.stringify(countries)); // Atualiza o armazenamento
+            renderCountries(); // Atualiza a lista de países
+            return randomEvent.description;
+        }
+
+        // Renderiza os países ao carregar a página
+        renderCountries();
+    </script>
+</body>
+</html>
